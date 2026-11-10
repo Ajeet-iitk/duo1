@@ -1,4 +1,8 @@
 # Bhasha — learn Tamil, Telugu & Gujarati
+**[Open the live site](https://ajeet-iitk.github.io/duo1/)**
+
+![Bhasha screenshot](screenshots/website.jpg)
+
 
 A Duolingo-style web app for learning **Tamil**, **Telugu** and **Gujarati** — from either
 **English** or **Hindi**. Built as a plain static site: no build step, no dependencies,
