@@ -7,7 +7,7 @@
   'use strict';
 
   function missing() {
-    var need = ['TLData', 'TLSfx', 'TLSpeech', 'TLStore', 'TLAI', 'TLEx', 'TLLesson', 'TLUI'];
+    var need = ['TLData', 'TLSfx', 'TLSpeech', 'TLStore', 'TLAI', 'TLEx', 'TLLesson', 'TLUI', 'TLTheme', 'TLMusic', 'TLExplore', 'TLI18n'];
     return need.filter(function (n) { return !root[n]; });
   }
 

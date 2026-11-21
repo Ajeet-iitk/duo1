@@ -56,6 +56,7 @@
         speechRate: 0.85,
         confirmQuit: false,
         sidebarCollapsed: false,
+        cloudVoice: true,
         ai: {
           enabled: true,
           provider: 'offline',                 /* 'offline' | 'openai-compatible' */

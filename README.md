@@ -1,5 +1,18 @@
 # Bhasha — learn Tamil, Telugu & Gujarati
 
+**Live site:** https://ajeet-iitk.github.io/duo1/ *(GitHub Pages — enable it under Settings → Pages → `main` / root if the link 404s)*
+
+![Home — day mode](docs/screenshots/home.png)
+
+| Night mode | Explore hub | Mastery map |
+|---|---|---|
+| ![night](docs/screenshots/home-night.png) | ![explore](docs/screenshots/explore.png) | ![mastery](docs/screenshots/mastery.png) |
+
+| Sentence Safari (live) | Wiki Wander (live) | Word Rain | Memory Flip (Hindi UI) |
+|---|---|---|---|
+| ![safari](docs/screenshots/safari.png) | ![wiki](docs/screenshots/wiki.png) | ![rain](docs/screenshots/rain.png) | ![flip](docs/screenshots/flip.png) |
+
+
 A Duolingo-style web app for learning **Tamil**, **Telugu** and **Gujarati** — from either
 **English** or **Hindi**. Built as a plain static site: no build step, no dependencies,
 no server required.
@@ -12,6 +25,10 @@ bhasha/
    └─ js/
       ├─ data/curriculum.js   ← all vocabulary, phrases, grammar notes, letter charts
       ├─ sfx.js               ← synthesised sound effects (Web Audio, no files)
+      ├─ music.js             ← generative background music + controller
+      ├─ theme.js             ← day/night, glyph background, favicon
+      ├─ i18n.js              ← English / Hindi / Hinglish UI strings
+      ├─ explore.js           ← Explore hub, live data, games, mastery map
       ├─ speech.js            ← text-to-speech + pronunciation scoring
       ├─ store.js             ← progress, streaks, hearts, gems, quests, achievements
       ├─ ai.js                ← the AI explainer + AI tutor
@@ -20,6 +37,31 @@ bhasha/
       ├─ views.js             ← every screen + navigation chrome
       └─ app.js               ← bootstrap
 ```
+
+## What's new in v5
+
+- **E / हिन्दी / Hinglish** — pick the language you learn *from*; the whole UI, glosses and AI tutor follow it. Hinglish glosses are transliterated live from the Hindi data (`paani`, `dhanyavaad`) and the UI speaks gen-z.
+- **Day / Night mode** — a sun/moon switch in the top bar (or Settings → Auto), with a smooth cross-fade, a night sky of glowing glyphs and a favicon that changes with the theme.
+- **Living background** — Tamil, Telugu, Gujarati and Devanagari letters drift upward and scatter away from your cursor. Respects *reduced motion*.
+- **Background music** — a floating controller (bottom-right) plays *generative* music synthesised in your browser: Raga Dawn, Lofi Chai, Monsoon, Temple Bells. Play/pause, mood, volume and a live visualiser; remembered between visits.
+- **Explore** — ten things to wander into: **Sentence Safari**, **Wiki Wander**, **Lookup Lab** (live), **Sound Garden**, **Word Rain**, **Memory Flip**, **60-Second Blitz**, **Dictation Dojo**, **Smart Flashcards**, and the **Mastery Map** (levels Newcomer → Master with a per-word heatmap and a "next move" coach). Every game feeds word-strength, XP and gems.
+- **Better audio** — ranks the best installed voice (Natural/Google/Microsoft first), lets you pick one in Settings, adds 🐢 slow playback, and falls back to a free online voice when your device has no Tamil/Telugu/Gujarati voice.
+- **Interactive navbar** — hover spotlight, sliding active marker, icon wiggle.
+
+## Live content from free sources
+
+No API keys anywhere.
+
+| Source | Used for | How it stays fresh |
+|---|---|---|
+| [Tatoeba](https://tatoeba.org) (CC BY 2.0 FR) | Example sentences with translations | `tools/update-content.mjs` rebuilds `assets/js/data/live-cache.js`; the **Update live content** GitHub Action runs it daily. Lookup Lab also searches live via a CORS relay. |
+| [Wikipedia REST API](https://www.mediawiki.org/wiki/API:REST_API) | Random articles in ta/te/gu (Wiki Wander) | fetched live in the browser |
+| [Wiktionary API](https://www.mediawiki.org/wiki/API:Main_page) | Dictionary hits in Lookup Lab | fetched live |
+| Google Translate TTS | Fallback voice | on demand |
+
+Refresh the bundled sentences by hand any time: `node tools/update-content.mjs`.
+
+**Screenshots / demo:** open `/?demo=en`, `?demo=hi` or `?demo=hg` for a pre-seeded profile, and add `&theme=dark` for night mode.
 
 ## Run it
 

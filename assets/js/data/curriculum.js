@@ -789,8 +789,40 @@
   /* Base languages a course can be studied from */
   var BASES = {
     en: { id: 'en', label: 'English', flag: '🇬🇧' },
-    hi: { id: 'hi', label: 'हिन्दी', flag: '🇮🇳' }
+    hi: { id: 'hi', label: 'हिन्दी', flag: '🇮🇳' },
+    hg: { id: 'hg', label: 'Hinglish', flag: '😎' }
   };
+
+  /* Rough Devanagari -> Latin so Hinglish learners get glosses like "paani". */
+  var DV = { 'अ':'a','आ':'aa','इ':'i','ई':'ee','उ':'u','ऊ':'oo','ऋ':'ri','ए':'e','ऐ':'ai','ओ':'o','औ':'au','अं':'an',
+    'क':'k','ख':'kh','ग':'g','घ':'gh','च':'ch','छ':'chh','ज':'j','झ':'jh','ट':'t','ठ':'th','ड':'d','ढ':'dh','ण':'n',
+    'त':'t','थ':'th','द':'d','ध':'dh','न':'n','प':'p','फ':'f','ब':'b','भ':'bh','म':'m','य':'y','र':'r','ल':'l','व':'v',
+    'श':'sh','ष':'sh','स':'s','ह':'h','ड़':'r','ढ़':'rh','ज्ञ':'gy','क्ष':'ksh' };
+  var MT = { 'ा':'aa','ि':'i','ी':'ee','ु':'u','ू':'oo','ृ':'ri','े':'e','ै':'ai','ो':'o','ौ':'au','ं':'n','ँ':'n','ः':'h','ॉ':'o' };
+  var hgCache = {};
+  function translit(str) {
+    if (!str) return '';
+    if (hgCache[str]) return hgCache[str];
+    var out = '', ch, i, n;
+    str = str.replace(/([क-ह])़/g, function (m, c) { return c; });
+    for (i = 0; i < str.length; i++) {
+      ch = str[i]; n = str[i + 1];
+      if (DV[ch]) {
+        out += DV[ch];
+        var isCons = ch >= 'क' && ch <= 'ह';
+        if (isCons) {
+          if (n === '्') { i++; }
+          else if (n && MT[n]) { /* matra supplies vowel */ }
+          else if (!n || /[\s,.?!।]/.test(n)) { /* schwa deletion at word end */ }
+          else out += 'a';
+        }
+      } else if (MT[ch]) out += MT[ch];
+      else if (ch === '।') out += '.';
+      else out += ch;
+    }
+    return (hgCache[str] = out);
+  }
+  function gloss(item, b) { return b === 'hi' ? item.hi : (b === 'hg' ? translit(item.hi) : item.en); }
 
   /* ------------------------------------------------------------ helpers */
   function allItems(course) {
@@ -815,6 +847,8 @@
   root.TLData = {
     courses: COURSES,
     bases: BASES,
+    gloss: gloss,
+    translit: translit,
     lessonsPerUnit: 3,
     allItems: allItems,
     allPhrases: allPhrases,

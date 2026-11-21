@@ -20,7 +20,7 @@
     return a;
   }
 
-  function gloss(item, base) { return base === 'hi' ? item.hi : item.en; }
+  function gloss(item, base) { return TLData.gloss(item, base); }
 
   function norm(s) {
     var t = String(s == null ? '' : s).toLowerCase();
@@ -101,7 +101,7 @@
       id: nid('mt'),
       type: 'match',
       title: 'Tap the matching pairs',
-      and: 'Match ' + course.name + ' to ' + (base === 'hi' ? 'Hindi' : 'English'),
+      and: 'Match ' + course.name + ' to ' + TLData.bases[base].label,
       pairs: items,
       explainItem: items[0] ? { id: '', script: items[0].script, roman: items[0].roman, en: items[0].meaning, hi: items[0].meaning } : null
     };

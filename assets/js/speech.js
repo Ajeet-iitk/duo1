@@ -29,60 +29,107 @@
 
   function normalize(code) { return String(code || '').replace('_', '-').toLowerCase(); }
 
-  function pickVoice(lang) {
-    load();
-    var want = normalize(lang);
-    var base = want.split('-')[0];
-    /* 1. exact locale match */
-    var v = voices.filter(function (x) { return normalize(x.lang) === want; })[0];
-    if (v) return v;
-    /* 2. same language, any locale */
-    v = voices.filter(function (x) { return normalize(x.lang).split('-')[0] === base; })[0];
-    if (v) return v;
-    /* 3. friendly fallback (Hindi voice reading Tamil script is wrong, so we
-          only fall back to a *voice* for the romanised hint read aloud) */
-    var fb = FALLBACK[base] || [];
-    for (var i = 0; i < fb.length; i++) {
-      v = voices.filter(function (x) { return normalize(x.lang).split('-')[0] === fb[i].split('-')[0]; })[0];
-      if (v) return v;
-    }
-    return null;
-  }
+  var chosen = {};      /* user-picked voice name per base lang */
+  var cloudOn = true;   /* free Google Translate TTS fallback when no native voice */
+  var audioEl = null;
 
-  function hasVoice(lang) {
+  function score(v) {
+    var n = (v.name + ' ' + v.voiceURI).toLowerCase(), sc = 0;
+    if (/natural|neural|online/.test(n)) sc += 4;
+    if (/google/.test(n)) sc += 3;
+    if (/microsoft/.test(n)) sc += 2;
+    if (!v.localService) sc += 1;
+    return sc;
+  }
+  function voicesFor(lang) {
     load();
     var base = normalize(lang).split('-')[0];
-    return voices.some(function (x) {
-      var b = normalize(x.lang).split('-')[0];
-      return b === base || (base === 'ta' && b === 'ta') || (base === 'te' && b === 'te');
-    });
+    return voices.filter(function (x) { return normalize(x.lang).split('-')[0] === base; })
+      .sort(function (a, b) { return score(b) - score(a); });
+  }
+  function pickVoice(lang) {
+    var base = normalize(lang).split('-')[0];
+    var list = voicesFor(lang);
+    if (chosen[base]) {
+      var pick = list.filter(function (x) { return x.name === chosen[base]; })[0];
+      if (pick) return pick;
+    }
+    var exact = list.filter(function (x) { return normalize(x.lang) === normalize(lang); })[0];
+    return exact || list[0] || null;
   }
 
-  /* Speak text. opts: {lang, roman, onend} */
-  function speak(text, opts) {
-    opts = opts || {};
-    if (!enabled || !root.speechSynthesis || !text) {
-      if (opts.onend) setTimeout(opts.onend, 60);
-      return false;
-    }
-    try { root.speechSynthesis.cancel(); } catch (e) {}
+  function hasVoice(lang) { return voicesFor(lang).length > 0; }
+
+  /* Free cloud voice (Google Translate TTS) — used when the device has no
+     voice for the language, which is common for Tamil/Telugu/Gujarati. */
+  function cloudSpeak(text, lang, opts) {
+    try {
+      if (audioEl) { audioEl.pause(); audioEl = null; }
+      var base = normalize(lang).split('-')[0];
+      var a = new Audio();
+      a.referrerPolicy = 'no-referrer';
+      a.src = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=' + base + '&q=' + encodeURIComponent(String(text).slice(0, 190));
+      a.playbackRate = Math.min(1.2, Math.max(0.6, (opts.rate == null ? rate : opts.rate) + 0.1));
+      var done = false;
+      function fin(ok) { if (done) return; done = true; if (!ok && opts.onfail) opts.onfail(); else if (opts.onend) opts.onend(); }
+      a.onended = function () { fin(true); };
+      a.onerror = function () { fin(false); };
+      audioEl = a;
+      var p = a.play();
+      if (p && p.catch) p.catch(function () { fin(false); });
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function nativeSpeak(text, opts, v) {
     var u = new root.SpeechSynthesisUtterance(String(text));
-    var v = pickVoice(opts.lang || 'en');
     if (v) u.voice = v;
-    u.lang = opts.lang || 'en';
+    u.lang = (v && v.lang) || opts.lang || 'en';
     u.rate = opts.rate == null ? rate : opts.rate;
     u.pitch = opts.pitch == null ? 1 : opts.pitch;
     u.volume = 1;
     var done = false;
-    u.onend = function () { if (!done) { done = true; if (opts.onend) opts.onend(); } };
-    u.onerror = function () { if (!done) { done = true; if (opts.onend) opts.onend(); } };
-    /* Safety net: some engines never fire onend. */
-    setTimeout(function () { if (!done) { done = true; if (opts.onend) opts.onend(); } }, 2600);
+    function fin() { if (!done) { done = true; if (opts.onend) opts.onend(); } }
+    u.onend = fin; u.onerror = fin;
+    setTimeout(fin, 2500 + String(text).length * 180 / (u.rate || 1));
     try { root.speechSynthesis.speak(u); } catch (e) { return false; }
+    /* Chrome bug: long utterances pause after ~15s; nudge it along. */
     return true;
   }
 
-  function stop() { try { root.speechSynthesis.cancel(); } catch (e) {} }
+  /* Speak text. opts: {lang, rate, slow, onend} */
+  function speak(text, opts) {
+    opts = opts || {};
+    if (opts.slow) opts.rate = Math.min(rate, 0.55);
+    if (!enabled || !text) { if (opts.onend) setTimeout(opts.onend, 60); return false; }
+    stop();
+    var lang = opts.lang || 'en';
+    var v = root.speechSynthesis ? pickVoice(lang) : null;
+    var base = normalize(lang).split('-')[0];
+    var isIndic = base === 'ta' || base === 'te' || base === 'gu';
+    var nativeOk = v && normalize(v.lang).split('-')[0] === base;
+    if (nativeOk) return nativeSpeak(text, opts, v);
+    if (isIndic && cloudOn) {
+      var ok = cloudSpeak(text, lang, {
+        rate: opts.rate, onend: opts.onend,
+        onfail: function () { if (root.speechSynthesis) nativeSpeak(text, opts, v); else if (opts.onend) opts.onend(); }
+      });
+      if (ok) return true;
+    }
+    if (!root.speechSynthesis) { if (opts.onend) setTimeout(opts.onend, 60); return false; }
+    return nativeSpeak(text, opts, v);
+  }
+
+  /* Speak the same text twice: normal, then slow. */
+  function speakBoth(text, opts) {
+    opts = opts || {};
+    speak(text, { lang: opts.lang, onend: function () { setTimeout(function () { speak(text, { lang: opts.lang, slow: true, onend: opts.onend }); }, 350); } });
+  }
+
+  function stop() {
+    try { root.speechSynthesis && root.speechSynthesis.cancel(); } catch (e) {}
+    if (audioEl) { try { audioEl.pause(); } catch (e) {} audioEl = null; }
+  }
 
   /* ------------------------------------------------------- recognition */
   var SR = root.SpeechRecognition || root.webkitSpeechRecognition;
@@ -137,6 +184,11 @@
 
   root.TLSpeech = {
     speak: speak,
+    speakBoth: speakBoth,
+    voicesFor: voicesFor,
+    choose: function (lang, name) { chosen[normalize(lang).split('-')[0]] = name; },
+    setCloud: function (v) { cloudOn = !!v; },
+    get cloud() { return cloudOn; },
     stop: stop,
     listen: listen,
     similar: similar,

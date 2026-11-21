@@ -21,7 +21,7 @@
   }
   function course() { return TLData.courses[TLStore.get('profile.course')]; }
   function base() { return TLStore.get('profile.base'); }
-  function gloss(item, b) { b = b || base(); return b === 'hi' ? item.hi : item.en; }
+  function gloss(item, b) { return TLData.gloss(item, b || base()); }
   function money(n) { return Number(n).toLocaleString('en-IN'); }
 
   /* ------------------------------------------------------------- icons */
@@ -33,13 +33,16 @@
       quests: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg>',
       profile: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2.2"/><path d="M4 21c0-4 3.6-6.5 8-6.5S20 17 20 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
       settings: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+      explore: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.2"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2Z" fill="currentColor"/></svg>',
       heart: '❤️', gem: '💎', fire: '🔥'
     };
     return s[name] || '';
   }
+  function lbl(n) { return TLI18n.t(n.id); }
   var NAV = [
     { id: 'learn', label: 'Learn', icon: 'learn' },
     { id: 'letters', label: 'Letters', icon: 'letters' },
+    { id: 'explore', label: 'Explore', icon: 'explore' },
     { id: 'tutor', label: 'AI Tutor', icon: 'tutor' },
     { id: 'quests', label: 'Progress', icon: 'quests' },
     { id: 'profile', label: 'Profile', icon: 'profile' }
@@ -64,13 +67,13 @@
     sb.innerHTML =
       '<a class="brand" href="#/learn" title="Bhasha">' + owl(34) + '<span class="bt">Bhasha<em>.</em></span></a>' +
       NAV.map(function (n) {
-        return '<a class="nav-item' + (route() === n.id ? ' active' : '') + '" href="#/' + n.id + '" data-nav="' + n.id + '" title="' + esc(n.label) + '" aria-label="' + esc(n.label) + '">' +
-          '<span class="ic">' + icon(n.icon) + '</span><span class="nl">' + n.label + '</span>' +
+        return '<a class="nav-item' + (route() === n.id ? ' active' : '') + '" href="#/' + n.id + '" data-nav="' + n.id + '" title="' + esc(lbl(n)) + '" aria-label="' + esc(lbl(n)) + '">' +
+          '<span class="ic">' + icon(n.icon) + '</span><span class="nl">' + esc(lbl(n)) + '</span>' +
           (n.id === 'quests' && questsReady() ? '<span class="dot">' + questsReady() + '</span>' : '') +
           '</a>';
       }).join('') +
       '<div class="nav-sep"></div>' +
-      '<a class="nav-item" href="#/settings" title="Settings" aria-label="Settings"><span class="ic">' + icon('settings') + '</span><span class="nl">Settings</span></a>' +
+      '<a class="nav-item" href="#/settings" title="Settings" aria-label="Settings"><span class="ic">' + icon('settings') + '</span><span class="nl">' + esc(TLI18n.t('settings')) + '</span></a>' +
       '<button class="langpicker" id="switchlang" title="' + esc(c.name) + '"><span class="lp-flag">' + c.flag + '</span><span class="lp-name">' + esc(c.name) + '</span></button>';
 
     $('#switchlang').addEventListener('click', function () { openLanguagePicker(); });
@@ -81,7 +84,7 @@
     var mn = $('#mobilenav');
     mn.innerHTML = NAV.map(function (n) {
       return '<a class="nav-item' + (route() === n.id ? ' active' : '') + '" href="#/' + n.id + '">' +
-        '<span class="ic">' + icon(n.icon) + '</span><span>' + n.label + '</span></a>';
+        '<span class="ic">' + icon(n.icon) + '</span><span>' + esc(lbl(n)) + '</span></a>';
     }).join('');
 
     applySidebar();
@@ -131,6 +134,7 @@
       '<button class="navtoggle" id="nav-toggle" title="Collapse sidebar" aria-label="Collapse sidebar" aria-expanded="true">«</button>' +
       '<button class="flagbtn" id="tb-lang" title="Change course"><span class="stat flag">' + c.flag + '</span><span class="tb-name">' + esc(c.name) + '</span></button>' +
       '<div class="spacer"></div>' +
+      '<button class="themebtn" id="theme-btn"></button>' +
       '<a class="stat streak" href="#/quests" title="Streak">🔥 <span>' + s.stats.streak + '</span></a>' +
       '<a class="stat gem" href="#/quests" title="Gems">💎 <span>' + money(s.stats.gems) + '</span></a>' +
       '<a class="stat heart" href="#/quests" title="Hearts left today">' + (hearts > 0 ? '❤️' : '🤍') + ' <span id="tb-hearts">' + hearts + '</span>' + (hearts === 0 && s.stats.hearts < TLStore.MAX_HEARTS ? '<span class="tiny" style="color:#afafaf">' + countdown() + '</span>' : '') + '</a>' +
@@ -150,6 +154,9 @@
       el.dataset.bound = '1';
       el.addEventListener('click', openLanguagePicker);
     }
+    var tb = $('#theme-btn');
+    if (tb && !tb.dataset.bound) { tb.dataset.bound = '1'; tb.addEventListener('click', function () { TLTheme.toggle(); }); }
+    TLTheme.paint();
     var tg = $('#nav-toggle');
     if (tg && !tg.dataset.bound) {
       tg.dataset.bound = '1';
@@ -162,8 +169,9 @@
   /*  ROUTER                                                            */
   /* ================================================================== */
   var currentRoute = 'learn';
+  function subroute() { return (location.hash || '').replace('#/', '').split('?')[0].split('/')[1] || ''; }
   function route() {
-    var r = (location.hash || '#/learn').replace('#/', '').split('?')[0];
+    var r = (location.hash || '#/learn').replace('#/', '').split('?')[0].split('/')[0];
     return NAV.concat([{ id: 'settings' }]).some(function (n) { return n.id === r; }) ? r : 'learn';
   }
 
@@ -194,6 +202,7 @@
     switch (r) {
       case 'learn': return pageLearn();
       case 'letters': return pageLetters();
+      case 'explore': return TLExplore.page(subroute());
       case 'tutor': return pageTutor();
       case 'quests': return pageQuests();
       case 'profile': return pageProfile();
@@ -206,7 +215,7 @@
   function pageLearn() {
     var c = course();
     var cc = TLStore.course(c.id);
-    var html = '';
+    var html = hero(c, cc);
     var activeUnitIdx = 0;
     var totalUnits = c.units.length;
 
@@ -258,6 +267,21 @@
         : 'Welcome! Tap the glowing node to begin ' + esc(c.name) + '.') + '</div></div>';
 
     return html;
+  }
+
+  var HELLO = { ta: ['வணக்கம்', 'Vanakkam'], te: ['నమస్కారం', 'Namaskaram'], gu: ['કેમ છો', 'Kem cho'] };
+  function hero(c, cc) {
+    var hel = HELLO[c.id] || ['Hello', ''];
+    var hr = new Date().getHours();
+    var tod = hr < 5 ? '🌙' : hr < 12 ? '🌅' : hr < 17 ? '☀️' : hr < 20 ? '🌇' : '🌙';
+    var m = TLExplore.mastery();
+    var lv = TLExplore.levels[m.lvl];
+    return '<div class="hero" style="--hc:' + c.color + '"><div class="hero-glow"></div>' +
+      '<div class="hero-kick">' + tod + ' ' + esc(TLI18n.t('heroKick')) + '</div>' +
+      '<div class="hero-hello" data-say="' + esc(hel[0]) + '">' + esc(hel[0]) + '</div>' +
+      '<div class="hero-rom">' + esc(hel[1]) + ' · tap to hear</div>' +
+      '<p>' + esc(TLI18n.t('heroSub')) + '</p>' +
+      '<div class="hero-row"><a class="chip" href="#/explore">🧭 ' + esc(TLI18n.t('explore')) + '</a><a class="chip" href="#/explore/mastery">' + lv.e + ' ' + esc(lv.n) + ' · ' + Math.round(m.pct * 100) + '%</a></div></div>';
   }
 
   function crowns(n) {
@@ -413,7 +437,7 @@
     return '<div class="card" style="display:flex;gap:18px;align-items:center;margin-bottom:18px">' +
       '<div style="font-size:64px">' + (s.profile.avatar || '🦉') + '</div>' +
       '<div style="flex:1"><h3 style="margin:0 0 4px;font-size:24px">' + esc(s.profile.name) + '</h3>' +
-      '<div class="muted">Joined ' + esc(s.profile.joined) + ' · learning ' + esc(c.name) + ' from ' + esc(base() === 'hi' ? 'Hindi' : 'English') + '</div>' +
+      '<div class="muted">Joined ' + esc(s.profile.joined) + ' · learning ' + esc(c.name) + ' from ' + esc(TLData.bases[base()].label) + '</div>' +
       '<button class="btn ghost sm" style="margin-top:8px" id="edit-name">Edit profile</button></div>' +
       '</div>' +
       '<div class="grid3" style="margin-bottom:18px">' +
@@ -461,9 +485,21 @@
       toggle('voice', 'Native audio', s.settings.voice) +
       '<div class="switch"><div><div class="r-title">Speaking speed</div><div class="r-sub">' + TLStore.get('settings.speechRate') + '×</div></div>' +
       '<input type="range" min="50" max="120" value="' + Math.round(s.settings.speechRate * 100) + '" id="set-rate" style="width:140px"></div>' +
+      '<div class="switch"><div><div class="r-title">Voice</div><div class="r-sub">Pick the best one on your device</div></div>' +
+      '<select id="set-voice" style="max-width:190px">' + voiceOptions() + '</select></div>' +
+      '<div class="switch"><div><div class="r-title">Online voice fallback</div><div class="r-sub">Free Google voice when your device has none for ' + esc(course().name) + '</div></div>' +
+      '<div class="toggle' + (TLSpeech.cloud ? ' on' : '') + '" data-toggle="cloudVoice"></div></div>' +
       '<div class="switch"><div><div class="r-title">Test audio</div><div class="r-sub">' + esc(TLSpeech.voiceName(course().speech)) + '</div></div>' +
       '<button class="btn sm" id="set-testspeak">Play sample</button></div>' +
       '</div>' +
+
+      '<div class="card" style="margin-bottom:18px"><h3>🎨 Appearance & music</h3>' +
+      '<div class="wrapflex"><button class="chip ' + (TLTheme.mode() === 'light' ? 'blue' : '') + '" data-theme-set="light">☀️ Day</button>' +
+      '<button class="chip ' + (TLTheme.mode() === 'dark' ? 'blue' : '') + '" data-theme-set="dark">🌙 Night</button>' +
+      '<button class="chip ' + (TLTheme.mode() === 'auto' ? 'blue' : '') + '" data-theme-set="auto">🖥️ Auto</button></div>' +
+      '<div class="r-title" style="margin-top:14px">Background music mood</div><div class="wrapflex" style="margin-top:6px">' +
+      TLMusic.moods.map(function (m, i) { return '<button class="chip" data-mood="' + i + '">' + m.icon + ' ' + m.name + '</button>'; }).join('') +
+      '<button class="chip blue" id="mood-toggle">▶ / ⏸</button></div></div>' +
 
       '<div class="card" style="margin-bottom:18px"><h3>🌍 Languages</h3>' +
       '<div class="wrapflex">' +
@@ -507,6 +543,12 @@
       '<div class="card"><h3>⚠️ Danger zone</h3>' +
       '<p class="muted">Reset all progress, streaks and achievements. This cannot be undone.</p>' +
       '<button class="btn red" id="reset-all">Reset everything</button></div>';
+  }
+
+  function voiceOptions() {
+    var list = TLSpeech.voicesFor(course().speech);
+    if (!list.length) return '<option>Online voice (cloud)</option>';
+    return list.map(function (v) { return '<option value="' + esc(v.name) + '">' + esc(v.name) + '</option>'; }).join('');
   }
 
   function toggle(id, label, on) {
@@ -566,6 +608,10 @@
   /* ================================================================== */
   function wireBody(r) {
     var center = $('#center');
+    if (r === 'explore') TLExplore.wire(subroute()); else TLExplore.wire(null);
+    $$('.xp-tile, .nav-item').forEach(function (a) { a.addEventListener('pointermove', function (e) { var b = a.getBoundingClientRect(); a.style.setProperty('--mx', (e.clientX - b.left) + 'px'); a.style.setProperty('--my', (e.clientY - b.top) + 'px'); }); });
+
+    $$('.hero-hello').forEach(function (b) { b.addEventListener('click', function () { TLSfx.play('combo'); TLSpeech.speak(b.getAttribute('data-say'), { lang: course().speech }); }); });
 
     /* lesson nodes */
     $$('[data-lesson]').forEach(function (b) {
@@ -656,10 +702,15 @@
         t.classList.toggle('on', val);
         if (key === 'sfx') TLSfx.setEnabled(val);
         if (key === 'voice') TLSpeech.setEnabled(val);
+        if (key === 'cloudVoice') TLSpeech.setCloud(val);
         if (key === 'sidebarCollapsed') applySidebar();
         TLSfx.play('tap');
       });
     });
+    $$('[data-theme-set]').forEach(function (b) { b.addEventListener('click', function () { TLTheme.set(b.getAttribute('data-theme-set')); renderRoute(); }); });
+    $$('[data-mood]').forEach(function (b) { b.addEventListener('click', function () { TLMusic.setMood(+b.getAttribute('data-mood')); if (!TLMusic.on) TLMusic.play(); }); });
+    var mt = $('#mood-toggle'); if (mt) mt.addEventListener('click', function () { TLMusic.toggle(); });
+    var sv = $('#set-voice'); if (sv) sv.addEventListener('change', function () { TLSpeech.choose(course().speech, sv.value); TLSpeech.speak(TLData.allItems(course())[6].script, { lang: course().speech }); });
     var vol = $('#set-vol');
     if (vol) vol.addEventListener('input', function () {
       var v = +vol.value / 100;
@@ -688,7 +739,7 @@
       b.addEventListener('click', function () {
         TLStore.set('profile.base', b.getAttribute('data-setbase'));
         TLSfx.play('tap');
-        toast('Now learning from ' + (base() === 'hi' ? 'Hindi' : 'English'));
+        toast(TLI18n.t('nowFrom') + ' ' + TLData.bases[base()].label); renderSidebar();
         renderRoute();
       });
     });
@@ -1080,8 +1131,19 @@
       document.removeEventListener('click', once);
     }, { once: true });
 
+    /* ?demo=en|hi|hg seeds a sample profile — handy for screenshots and showing the app off. */
+    var dm = /[?&]demo=?(en|hi|hg)?/.exec(location.search);
+    if (dm && !TLStore.get('profile.onboarded')) {
+      TLStore.set('profile.onboarded', true); TLStore.set('profile.base', dm[1] || 'en'); TLStore.set('profile.name', 'Demo');
+      var cc = TLData.courses[TLStore.get('profile.course')], ws = {};
+      TLData.allItems(cc).forEach(function (w, i) { if (i < 60) ws[w.id] = { seen: 3, right: 3, wrong: i % 7 === 0 ? 1 : 0, strength: Math.min(1, 0.25 + (i % 5) * 0.2) }; });
+      TLStore.course(cc.id).words = ws; TLStore.addXp(120, cc.id);
+    }
+    TLTheme.init();
+    TLSpeech.setCloud(TLStore.get('settings.cloudVoice') !== false);
     mountShell();
     renderRoute();
+    TLMusic.init();
 
     if (!TLStore.get('profile.onboarded')) onboarding();
 

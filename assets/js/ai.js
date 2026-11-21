@@ -85,11 +85,11 @@
   }
   function baseLabel() {
     var b = root.TLStore.get('profile.base');
-    return b === 'hi' ? 'Hindi' : 'English';
+    return b === 'hi' ? 'Hindi' : (b === 'hg' ? 'Hinglish' : 'English');
   }
   function gloss(item, base) {
     if (!item) return '';
-    return base === 'hi' ? item.hi : item.en;
+    return TLData.gloss(item, base);
   }
 
   /* Quiz a natural example sentence containing the word, if we have one. */
@@ -244,7 +244,7 @@
 
   /* ------------------------------------------------------------- LLM call */
   function systemPrompt(course, base) {
-    var b = base === 'hi' ? 'Hindi' : 'English';
+    var b = base === 'hi' ? 'Hindi' : (base === 'hg' ? 'Hinglish (Hindi in Roman letters, gen-z casual)' : 'English');
     return 'You are Bhasha, a warm, funny and precise ' + course.name + ' tutor inside a language-learning app. ' +
       'The learner is a native ' + b + ' speaker. Rules: ' +
       '1) Always give the ' + course.name + ' script, then a romanisation, then the ' + b + ' meaning. ' +
@@ -304,7 +304,7 @@
     var c = cfg();
     var facts = '';
     if (item) {
-      facts = 'Word: ' + item.script + ' (roman: ' + item.roman + '), meaning in ' + (base === 'hi' ? 'Hindi: ' + item.hi : 'English: ' + item.en) + '.';
+      facts = 'Word: ' + item.script + ' (roman: ' + item.roman + '), meaning in ' + (base === 'hi' ? 'Hindi: ' + item.hi : 'English: ' + TLData.gloss(item, base)) + '.';
       var ctx = contextFor(course, item.id);
       if (ctx.unit) facts += ' Unit: "' + ctx.unit.title + '".';
       if (ctx.notes && ctx.notes.length) facts += ' Unit grammar notes: ' + ctx.notes.map(function (n) { return n.title + ': ' + n.body; }).join(' ');
