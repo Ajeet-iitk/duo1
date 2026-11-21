@@ -21,18 +21,60 @@
     if (m) m.content = t === 'dark' ? '#0f1724' : '#58CC02';
   }
 
-  function apply(animate) {
-    var t = eff(), el = document.documentElement;
-    if (animate) { el.classList.add('theme-fade'); setTimeout(function () { el.classList.remove('theme-fade'); }, 700); }
-    el.setAttribute('data-theme', t);
+  var DUR = 2400;   /* ms — deliberately slow and cinematic */
+  function apply() {
+    var t = eff();
+    document.documentElement.setAttribute('data-theme', t);
     favicon(t);
     paintToggle();
   }
+
+  /* Sun / moon crossing the sky + dusk or dawn wash, while the page itself
+     is revealed through an expanding circle (View Transitions) or a long fade. */
+  function skyShow(toDark) {
+    var old = document.getElementById('skyfx'); if (old) old.remove();
+    var d = document.createElement('div');
+    d.id = 'skyfx'; d.className = 'skyfx ' + (toDark ? 'to-night' : 'to-day');
+    var stars = '';
+    if (toDark) for (var i = 0; i < 26; i++) stars += '<i style="left:' + (Math.random() * 100).toFixed(1) + '%;top:' + (Math.random() * 60).toFixed(1) + '%;animation-delay:' + (Math.random() * 1.2).toFixed(2) + 's"></i>';
+    d.innerHTML = '<div class="sk-wash"></div><div class="sk-stars">' + stars + '</div><div class="sk-orb"><span>' + (toDark ? '\ud83c\udf19' : '\u2600\ufe0f') + '</span></div>' +
+      '<div class="sk-text">' + (toDark ? 'Good night' : 'Good morning') + '</div>';
+    document.body.appendChild(d);
+    setTimeout(function () { d.remove(); }, DUR + 500);
+  }
+
+  function change(fn) {
+    var el = document.documentElement, b = document.getElementById('theme-btn');
+    if (reduced) { fn(); return; }
+    var toDark = eff() !== 'dark';
+    skyShow(toDark);
+    var r = b ? b.getBoundingClientRect() : { left: innerWidth - 60, top: 30, width: 0, height: 0 };
+    var x = r.left + r.width / 2, y = r.top + r.height / 2;
+    var rad = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    if (document.startViewTransition) {
+      el.classList.add('vt-theme');
+      var tr = document.startViewTransition(fn);
+      tr.ready.then(function () {
+        el.animate({ clipPath: ['circle(0px at ' + x + 'px ' + y + 'px)', 'circle(' + rad + 'px at ' + x + 'px ' + y + 'px)'] },
+          { duration: DUR, easing: 'cubic-bezier(.6,.05,.3,1)', pseudoElement: '::view-transition-new(root)' });
+      }).catch(function () {});
+      tr.finished.then(function () { el.classList.remove('vt-theme'); }, function () { el.classList.remove('vt-theme'); });
+    } else {
+      el.classList.add('theme-fade'); fn();
+      setTimeout(function () { el.classList.remove('theme-fade'); }, DUR);
+    }
+  }
+
   function set(m) {
+    var before = eff();
     mode = m;
     try { localStorage.setItem(KEY, m); } catch (e) {}
-    apply(true);
-    if (root.TLSfx) root.TLSfx.play(eff() === 'dark' ? 'whoosh' : 'chest');
+    var after = eff();
+    if (before === after) { apply(); return; }
+    mode = before === 'dark' ? 'dark' : 'light';   /* skyShow reads the old state */
+    var target = m;
+    change(function () { mode = target; apply(); });
+    if (root.TLSfx) root.TLSfx.play(after === 'dark' ? 'whoosh' : 'chest');
   }
   function toggle() { set(eff() === 'dark' ? 'light' : 'dark'); }
 
@@ -87,10 +129,10 @@
   }
 
   function init() {
-    apply(false);
+    apply();
     if (root.matchMedia) {
       var mq = root.matchMedia('(prefers-color-scheme: dark)');
-      if (mq.addEventListener) mq.addEventListener('change', function () { if (mode === 'auto') apply(true); });
+      if (mq.addEventListener) mq.addEventListener('change', function () { if (mode === 'auto') apply(); });
     }
     startBg();
   }

@@ -90,7 +90,7 @@
       try {
         var parsed = JSON.parse(raw);
         state = migrate(parsed);
-      } catch (e) { state = fresh(); }
+      } catch (e) { if (root.console) console.warn('Bhasha: saved state could not be read, starting fresh', e); state = fresh(); }
     } else {
       state = fresh();
     }
@@ -107,7 +107,7 @@
     function merge(a, b) {
       Object.keys(b).forEach(function (k) {
         if (a[k] === undefined || a[k] === null) a[k] = b[k];
-        else if (typeof b[k] === 'object' && !Array.isArray(b[k])) merge(a[k], b[k]);
+        else if (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && typeof a[k] === 'object' && !Array.isArray(a[k])) merge(a[k], b[k]);
       });
       return a;
     }

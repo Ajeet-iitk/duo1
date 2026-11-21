@@ -59,6 +59,7 @@
 
   /* ================================================================ HUB */
   var TILES = [
+    { id: 'cinema', icon: '\ud83c\udfac', t: 'Film Dialogues', d: 'Iconic movie lines in your language. Hear, break down, shadow.', c: '#e6397a', hot: true },
     { id: 'safari', icon: '🧭', t: 'Sentence Safari', d: 'Real sentences from real people. Refreshed daily.', live: true, c: '#1cb0f6' },
     { id: 'wiki', icon: '📰', t: 'Wiki Wander', d: 'Random articles in your language. Read, listen, get lost.', live: true, c: '#ce82ff' },
     { id: 'sounds', icon: '🌺', t: 'Sound Garden', d: 'Tap every letter and hear it bloom.', c: '#ff86d0' },
@@ -78,7 +79,7 @@
       '<div class="xp-grid">' + TILES.map(function (t, i) {
         return '<a class="xp-tile" href="#/explore/' + t.id + '" style="--c:' + t.c + ';--d:' + (i * 60) + 'ms">' +
           '<div class="xp-ic">' + t.icon + '</div><div class="xp-tt">' + esc(t.t) + '</div><div class="xp-dd">' + esc(t.d) + '</div>' +
-          (t.live ? '<span class="xp-badge live">' + esc(T('live')) + '</span>' : (t.game ? '<span class="xp-badge">GAME</span>' : '')) + '</a>';
+          (t.hot ? '<span class="xp-badge hot">NEW</span>' : t.live ? '<span class="xp-badge live">' + esc(T('live')) + '</span>' : (t.game ? '<span class="xp-badge">GAME</span>' : '')) + '</a>';
       }).join('') + '</div>';
   }
 
@@ -99,6 +100,7 @@
       case 'lookup': return shell(title, '<form class="xp-search" id="lk-form"><input id="lk-q" placeholder="Type an English word, e.g. river" autocomplete="off"><button class="btn sm">Search</button></form><div id="lk-out" class="muted" style="margin-top:12px">Results come from your course, the Tatoeba sentence bank and live Wiktionary.</div>');
       case 'sounds': return shell(title, '<div id="sg"></div>', '<p class="muted">Every letter of ' + esc(course().name) + '. Tap to hear. Try the mystery round when ready.</p>');
       case 'mastery': return shell(title, masteryHtml());
+      case 'cinema': return TLFilms.page();
       default: return shell(title, '<div id="game"></div>');
     }
   }
@@ -107,7 +109,7 @@
   function wire(sub) {
     if (running) { running(); running = null; }
     if (!sub) return;
-    var fn = { safari: safari, wiki: wiki, lookup: lookup, sounds: sounds, rain: rain, flip: flip, blitz: blitz, cards: cards, dojo: dojo, mastery: masteryWire }[sub];
+    var fn = { cinema: function () { TLFilms.wire(); }, safari: safari, wiki: wiki, lookup: lookup, sounds: sounds, rain: rain, flip: flip, blitz: blitz, cards: cards, dojo: dojo, mastery: masteryWire }[sub];
     if (fn) running = fn() || null;
   }
 

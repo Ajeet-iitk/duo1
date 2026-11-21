@@ -52,7 +52,12 @@ bhasha/
 - **Background music** — a floating controller (bottom-right) plays *generative* music synthesised in your browser: Raga Dawn, Lofi Chai, Monsoon, Temple Bells. Play/pause, mood, volume and a live visualiser; remembered between visits.
 - **Explore** — ten things to wander into: **Sentence Safari**, **Wiki Wander**, **Lookup Lab** (live), **Sound Garden**, **Word Rain**, **Memory Flip**, **60-Second Blitz**, **Dictation Dojo**, **Smart Flashcards**, and the **Mastery Map** (levels Newcomer → Master with a per-word heatmap and a "next move" coach). Every game feeds word-strength, XP and gems.
 - **Better audio** — ranks the best installed voice (Natural/Google/Microsoft first), lets you pick one in Settings, adds 🐢 slow playback, and falls back to a free online voice when your device has no Tamil/Telugu/Gujarati voice.
-- **Interactive navbar** — hover spotlight, sliding active marker, icon wiggle.
+- **Creative navbar** — a glowing pill that slides between tabs (each tab has its own colour), a live mastery-level chip under the logo, a daily-goal ring around Progress, a compass that wiggles on Explore, and a floating glass dock on phones.
+- **Cinematic day/night** — switching themes takes ~2.4 s: the new theme is revealed through a circle expanding from the toggle while a sun or moon crosses the sky with a dusk/dawn wash and twinkling stars.
+- **Film Dialogues** — famous Tamil, Telugu and Gujarati film lines (Baasha, Nayakan, Pushpa, Pokiri, RRR, Hellaro, Last Film Show and more) on CSS-drawn posters. Hear each line, slow it down, tap words for meanings, shadow it with the mic, or take the cinema quiz.
+- **Fixed:** progress was wiped on every page reload once you had earned XP (a state-loading crash); scrolling; night mode on lessons, popups and settings.
+
+![Film Dialogues — Telugu](docs/screenshots/film-telugu.png)
 
 ## Live content from free sources
 

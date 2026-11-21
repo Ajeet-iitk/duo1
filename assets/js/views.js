@@ -39,6 +39,35 @@
     return s[name] || '';
   }
   function lbl(n) { return TLI18n.t(n.id); }
+  var NAVCOL = { learn: '#58cc02', letters: '#ff9600', explore: '#e6397a', tutor: '#ce82ff', quests: '#1cb0f6', profile: '#14b8d4', settings: '#8a8a8a' };
+  var lastPill = {};
+  function dailyPct() { var s = TLStore.state; return Math.min(100, Math.round(s.daily.xp / s.daily.goal * 100)); }
+  function levelChip() {
+    var m = TLExplore.mastery(), L = TLExplore.levels[m.lvl];
+    return '<a class="brand-lvl" href="#/explore/mastery" title="Mastery level"><span class="bl-e">' + L.e + '</span><span class="bl-t"><b>' + esc(L.n) + '</b><i><u style="width:' + Math.max(4, Math.round(m.pct * 100)) + '%"></u></i></span></a>';
+  }
+  /* A single glowing pill slides from the previous tab to the new one. */
+  function placePills() {
+    [['sidebar', 's'], ['mobilenav', 'm']].forEach(function (c) {
+      var host = document.getElementById(c[0]); if (!host) return;
+      var pill = host.querySelector('.nav-pill'), act = host.querySelector('.nav-item.active');
+      if (!pill) return;
+      if (!act || !act.offsetWidth) { pill.style.opacity = 0; return; }
+      var x = act.offsetLeft, y = act.offsetTop, prev = lastPill[c[1]];
+      pill.style.opacity = 1;
+      pill.style.width = act.offsetWidth + 'px'; pill.style.height = act.offsetHeight + 'px';
+      pill.style.left = x + 'px'; pill.style.top = y + 'px';
+      pill.style.setProperty('--nc', getComputedStyle(act).getPropertyValue('--nc') || '#1cb0f6');
+      if (prev && (prev.x !== x || prev.y !== y)) {
+        pill.style.transition = 'none';
+        pill.style.transform = 'translate(' + (prev.x - x) + 'px,' + (prev.y - y) + 'px) scale(1.05,.9)';
+        void pill.offsetWidth;
+        pill.style.transition = '';
+        pill.style.transform = 'none';
+      }
+      lastPill[c[1]] = { x: x, y: y };
+    });
+  }
   var NAV = [
     { id: 'learn', label: 'Learn', icon: 'learn' },
     { id: 'letters', label: 'Letters', icon: 'letters' },
@@ -65,9 +94,11 @@
     var sb = $('#sidebar');
     sb.className = 'sidebar';
     sb.innerHTML =
+      '<span class="nav-pill" aria-hidden="true"></span>' +
       '<a class="brand" href="#/learn" title="Bhasha">' + owl(34) + '<span class="bt">Bhasha<em>.</em></span></a>' +
+      levelChip() +
       NAV.map(function (n) {
-        return '<a class="nav-item' + (route() === n.id ? ' active' : '') + '" href="#/' + n.id + '" data-nav="' + n.id + '" title="' + esc(lbl(n)) + '" aria-label="' + esc(lbl(n)) + '">' +
+        return '<a class="nav-item' + (route() === n.id ? ' active' : '') + (n.id === 'explore' ? ' hot' : '') + '" style="--nc:' + NAVCOL[n.id] + (n.id === 'quests' ? ';--ring:' + dailyPct() : '') + '" href="#/' + n.id + '" data-nav="' + n.id + '" title="' + esc(lbl(n)) + '" aria-label="' + esc(lbl(n)) + '">' +
           '<span class="ic">' + icon(n.icon) + '</span><span class="nl">' + esc(lbl(n)) + '</span>' +
           (n.id === 'quests' && questsReady() ? '<span class="dot">' + questsReady() + '</span>' : '') +
           '</a>';
@@ -82,12 +113,13 @@
     });
 
     var mn = $('#mobilenav');
-    mn.innerHTML = NAV.map(function (n) {
-      return '<a class="nav-item' + (route() === n.id ? ' active' : '') + '" href="#/' + n.id + '">' +
+    mn.innerHTML = '<span class="nav-pill" aria-hidden="true"></span>' + NAV.map(function (n) {
+      return '<a class="nav-item' + (route() === n.id ? ' active' : '') + (n.id === 'explore' ? ' hot' : '') + '" style="--nc:' + NAVCOL[n.id] + (n.id === 'quests' ? ';--ring:' + dailyPct() : '') + '" href="#/' + n.id + '">' +
         '<span class="ic">' + icon(n.icon) + '</span><span>' + esc(lbl(n)) + '</span></a>';
     }).join('');
 
     applySidebar();
+    placePills();
   }
 
   /* Sidebar collapse state is shared by the top-bar button and Settings, and is
@@ -110,6 +142,7 @@
     TLStore.set('settings.sidebarCollapsed', !TLStore.get('settings.sidebarCollapsed'));
     root.TLSfx.play('tapSoft');
     applySidebar();
+    lastPill = {}; setTimeout(placePills, 220);
   }
 
   function questsReady() {
@@ -1147,6 +1180,7 @@
 
     if (!TLStore.get('profile.onboarded')) onboarding();
 
+    window.addEventListener('resize', function () { lastPill = {}; placePills(); });
     window.addEventListener('hashchange', function () {
       TLSfx.play('whoosh');
       closeExplain();
