@@ -253,3 +253,28 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .tb-name { display: none; }
 }
 @media (hover: none) { .xp-tile:hover, .chip:hover, .pick:hover, .node:hover { transform: none; } }
+
+/* ==========================================================================
+   Welcome / onboarding — themed, glassy, animated
+   ========================================================================== */
+.blueprint { background: transparent; backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); display: flex; align-items: center; justify-content: center; }
+:root[data-theme="light"] .blueprint { background: radial-gradient(900px 500px at 85% 0%, #dcffbf 0%, transparent 60%), radial-gradient(800px 500px at 0% 100%, #d4efff 0%, transparent 60%), rgba(255,255,255,.92); }
+:root[data-theme="dark"] .blueprint { background: radial-gradient(900px 500px at 85% 0%, #1d3a5c 0%, transparent 60%), radial-gradient(800px 500px at 0% 100%, #3a2166 0%, transparent 60%), rgba(10,17,28,.94); }
+.blueprint > div { width: 100%; margin: auto !important; animation: pageIn .5s cubic-bezier(.2,.8,.2,1) both; }
+.blueprint h1 { font-size: clamp(36px, 7vw, 52px) !important; font-weight: 900; letter-spacing: -1px; color: var(--eel);
+  background: linear-gradient(90deg, #58cc02, #1cb0f6, #ce82ff, #58cc02); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 6s linear infinite; }
+@keyframes shimmer { to { background-position: 250% 0; } }
+.blueprint h2 { color: var(--eel); font-size: 20px; }
+.blueprint .muted { color: var(--wolf); }
+.blueprint svg { animation: owlHop 2.4s ease-in-out infinite; filter: drop-shadow(0 8px 10px rgba(0,0,0,.2)); }
+@keyframes owlHop { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-10px) rotate(3deg); } }
+.blueprint .pick { background: color-mix(in srgb, var(--snow) 82%, transparent); backdrop-filter: blur(8px); border: 2px solid var(--swan); border-bottom-width: 5px; border-radius: 20px; padding: 16px; text-align: left; color: var(--eel); }
+.blueprint .pick:hover { border-color: var(--blue); transform: translateY(-4px) rotate(-.5deg); background: color-mix(in srgb, var(--blue) 12%, var(--snow)); }
+.blueprint .pick.sel { border-color: var(--green); background: color-mix(in srgb, var(--green) 20%, var(--snow)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--green) 25%, transparent); transform: translateY(-3px); }
+.blueprint .pick .p-flag { font-size: 38px; transition: transform .25s cubic-bezier(.4,1.8,.5,1); }
+.blueprint .pick:hover .p-flag, .blueprint .pick.sel .p-flag { transform: scale(1.2) rotate(8deg); }
+.blueprint .pick-grid .pick { animation: tileIn .5s both; } .blueprint .pick-grid .pick:nth-child(2) { animation-delay: .08s; } .blueprint .pick-grid .pick:nth-child(3) { animation-delay: .16s; }
+.blueprint .btn.lg { min-width: 160px; }
+.blueprint .btn.disabled { background: var(--swan); color: var(--hare); }
+:root[data-theme="dark"] .blueprint .btn.ghost { background: var(--polar); }
+@media (max-width: 640px) { .blueprint { padding: 16px; align-items: flex-start; } }

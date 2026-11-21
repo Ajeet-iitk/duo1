@@ -1056,7 +1056,7 @@
       if (step === 0) {
         host.innerHTML = '<div style="max-width:720px;margin:20px auto">' +
           '<div style="text-align:center">' + owl(72) + '<h1 style="font-size:32px;margin:10px 0 4px">Bhasha</h1>' +
-          '<p class="muted" style="font-size:17px">Learn Tamil, Telugu or Gujarati — from English or Hindi.</p></div>' +
+          '<p class="muted" style="font-size:17px">Learn Tamil, Telugu or Gujarati — from English, Hindi or Hinglish.</p></div>' +
           '<h2 style="margin:26px 0 4px">I want to learn…</h2>' +
           '<div class="pick-grid">' + Object.keys(TLData.courses).map(function (id) {
             var c = TLData.courses[id];
