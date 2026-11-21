@@ -184,3 +184,72 @@ html.theme-fade, html.theme-fade *, html.theme-fade *::before, html.theme-fade *
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }
 
 .mobile-nav .nav-item { min-width: 0; } .mobile-nav .nav-item span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ==========================================================================
+   v5.1 — UI/UX polish pass
+   ========================================================================== */
+html { scroll-behavior: smooth; }
+::selection { background: color-mix(in srgb, var(--blue) 35%, transparent); }
+body { line-height: 1.45; text-rendering: optimizeLegibility; }
+
+/* keyboard focus that is actually visible */
+:focus { outline: none; }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; border-radius: 12px; }
+
+/* tap targets + press feedback */
+.btn, .chip, .pick, .choice-lg, .iconbtn { min-height: 40px; }
+.btn { transition: transform .12s, filter .15s, box-shadow .12s; }
+.chip, .pick { transition: transform .15s cubic-bezier(.4,1.6,.5,1), border-color .15s, background-color .2s; }
+.chip:hover, .pick:hover { transform: translateY(-2px); }
+.chip:active, .pick:active { transform: translateY(1px) scale(.98); }
+
+/* cards: soft depth and hover lift */
+.card { box-shadow: 0 2px 0 rgba(0,0,0,.04), 0 10px 24px -16px rgba(0,0,0,.25); transition: transform .2s, box-shadow .2s, border-color .2s; }
+.right-rail .card:hover { transform: translateY(-2px); box-shadow: 0 2px 0 rgba(0,0,0,.04), 0 16px 30px -16px rgba(0,0,0,.3); }
+
+/* page transition */
+.center-col { animation: pageIn .35s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes pageIn { from { opacity: 0; transform: translateY(10px); } }
+
+/* learning path: friendlier nodes */
+.node { transition: transform .18s cubic-bezier(.4,1.8,.5,1), box-shadow .18s; }
+.node:not(.locked):hover { transform: scale(1.08) translateY(-2px); }
+.node.current { animation: nodeBob 2.2s ease-in-out infinite; }
+@keyframes nodeBob { 50% { transform: translateY(-5px); } }
+.unit-band { box-shadow: 0 5px 0 rgba(0,0,0,.18); transition: transform .2s; }
+.unit-band:hover { transform: translateY(-1px); }
+.ub-guide { transition: transform .15s; } .ub-guide:hover { transform: scale(1.04); }
+
+/* topbar: no hard strip in night mode, softer edge */
+:root[data-theme="dark"] .topbar { background: transparent; box-shadow: none; }
+.topbar { border-radius: 0 0 18px 18px; }
+.stat { transition: background-color .2s, transform .15s; } .stat:hover { transform: translateY(-1px); }
+
+/* form fields */
+input, textarea, select { transition: border-color .15s, box-shadow .15s; }
+input:focus, textarea:focus, select:focus { border-color: var(--blue) !important; box-shadow: 0 0 0 4px color-mix(in srgb, var(--blue) 22%, transparent); outline: none; }
+.toggle { transition: background-color .25s; }
+
+/* toasts + modals feel */
+.toast { backdrop-filter: blur(8px); box-shadow: 0 10px 30px rgba(0,0,0,.3); animation: tileIn .3s both; }
+.modal-bg, .overlay { backdrop-filter: blur(4px); }
+
+/* nicer scrollbars in night mode */
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #34506e; }
+:root[data-theme="dark"] .muted { color: var(--wolf); }
+
+/* mobile: roomier bottom bar, safe areas, no sideways scroll */
+html, body { max-width: 100%; overflow-x: hidden; }
+@media (max-width: 900px) {
+  .mobile-nav { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 -6px 20px -10px rgba(0,0,0,.25); padding-bottom: env(safe-area-inset-bottom); }
+  .mobile-nav .nav-item.active { transform: translateY(-3px); }
+  .mobile-nav .nav-item.active .ic { transform: scale(1.15); }
+  .hero-hello { font-size: clamp(34px, 11vw, 52px); }
+  .xs-t { font-size: 18px; }
+  .btn { min-height: 44px; }
+}
+@media (max-width: 640px) {
+  .topbar { gap: 8px; } .stat { font-size: 15px; padding: 4px; }
+  .tb-name { display: none; }
+}
+@media (hover: none) { .xp-tile:hover, .chip:hover, .pick:hover, .node:hover { transform: none; } }

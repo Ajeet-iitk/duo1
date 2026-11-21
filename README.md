@@ -1,5 +1,6 @@
 # Bhasha — learn Tamil, Telugu & Gujarati
 
+<<<<<<< HEAD
 **Live site:** https://ajeet-iitk.github.io/duo1/ *(GitHub Pages — enable it under Settings → Pages → `main` / root if the link 404s)*
 
 ![Home — day mode](docs/screenshots/home.png)
@@ -11,6 +12,11 @@
 | Sentence Safari (live) | Wiki Wander (live) | Word Rain | Memory Flip (Hindi UI) |
 |---|---|---|---|
 | ![safari](docs/screenshots/safari.png) | ![wiki](docs/screenshots/wiki.png) | ![rain](docs/screenshots/rain.png) | ![flip](docs/screenshots/flip.png) |
+=======
+**[Open the live site](https://ajeet-iitk.github.io/duo1/)**
+
+![Bhasha screenshot](screenshots/website.jpg)
+>>>>>>> 75355122180902cdcb979559bb0665e1621c5258
 
 
 A Duolingo-style web app for learning **Tamil**, **Telugu** and **Gujarati** — from either
