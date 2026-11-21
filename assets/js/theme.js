@@ -69,7 +69,6 @@
       g.save(); g.translate(p.x, p.y); g.rotate(Math.sin(p.p) * 0.25);
       g.font = '900 ' + p.s + 'px Nunito, "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Gujarati", sans-serif';
       g.fillStyle = night ? 'hsla(' + p.hue + ',90%,75%,' + a + ')' : 'hsla(' + p.hue + ',65%,50%,' + a + ')';
-      if (night) { g.shadowColor = 'hsla(' + p.hue + ',100%,70%,.6)'; g.shadowBlur = 14; }
       g.fillText(p.c, 0, 0); g.restore();
     }
     raf = root.requestAnimationFrame(frame);

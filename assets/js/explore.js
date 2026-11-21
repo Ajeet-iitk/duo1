@@ -1,7 +1,7 @@
 /* Bhasha — Explore: live content from free web APIs + games + mastery map.
    Free sources used (no keys):
      • Tatoeba     — example sentences (bundled cache refreshed daily by tools/update-content.mjs,
-                     plus live search through a public CORS relay when you search a word)
+                     searched offline in Lookup Lab)
      • Wikipedia   — random article summaries in Tamil / Telugu / Gujarati (REST API, CORS-enabled)
      • Wiktionary  — dictionary look-ups via the MediaWiki API
      • Google Translate TTS — fallback voice when the device has no native voice (see speech.js) */
@@ -37,12 +37,8 @@
   }
   function setCache(k, v) { try { localStorage.setItem(cacheKey(k), JSON.stringify({ t: Date.now(), v: v })); } catch (e) {} }
 
-  function getJSON(url, relay) {
-    var tryDirect = fetch(url).then(function (r) { if (!r.ok) throw 0; return r.json(); });
-    if (!relay) return tryDirect;
-    return tryDirect.catch(function () {
-      return fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url)).then(function (r) { if (!r.ok) throw 0; return r.json(); });
-    });
+  function getJSON(url) {
+    return fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
   }
 
   function bundled(id) {
@@ -50,21 +46,6 @@
     return c && c.sentences && c.sentences[id] ? c.sentences[id] : [];
   }
   function updatedAt() { var c = root.TLLiveCache; return c && c.updated ? new Date(c.updated).toLocaleDateString() : ''; }
-
-  function tatoebaSearch(id, q) {
-    var tat = T3[id];
-    var url = 'https://tatoeba.org/en/api_v0/search?from=eng&to=' + tat + '&query=' + encodeURIComponent(q) + '&trans_filter=limit&trans_to=' + tat;
-    return getJSON(url, true).then(function (j) {
-      var out = [];
-      (j.results || []).forEach(function (r) {
-        var all = [].concat.apply([], r.translations || []);
-        var tr = all.filter(function (t) { return t.lang === tat; })[0];
-        var hi = all.filter(function (t) { return t.lang === 'hin'; })[0];
-        if (tr) out.push({ id: tr.id, en: r.text, hi: hi ? hi.text : '', t: tr.text, w: q });
-      });
-      return out;
-    });
-  }
 
   function wikiRandom(id) {
     return getJSON('https://' + id + '.wikipedia.org/api/rest_v1/page/random/summary').then(function (j) {
@@ -86,7 +67,7 @@
     { id: 'blitz', icon: '⚡', t: '60-Second Blitz', d: 'Fast quiz. Chain a combo, earn gems.', game: true, c: '#ffc800' },
     { id: 'cards', icon: '🗂️', t: 'Smart Flashcards', d: 'Weakest words first. Teach the deck what you know.', c: '#58cc02' },
     { id: 'dojo', icon: '🎧', t: 'Dictation Dojo', d: 'Hear it. Type it. No peeking.', game: true, c: '#ff4b4b' },
-    { id: 'lookup', icon: '🔎', t: 'Lookup Lab', d: 'Search any English word for live sentences + dictionary.', live: true, c: '#4dd0a1' },
+    { id: 'lookup', icon: '🔎', t: 'Lookup Lab', d: 'Search any English word: course words, real sentences, dictionary.', live: true, c: '#4dd0a1' },
     { id: 'mastery', icon: '🏆', t: 'Mastery Map', d: 'See exactly what you know — and what is next.', c: '#a568cc' }
   ];
 
@@ -115,7 +96,7 @@
     switch (sub) {
       case 'safari': return shell(title, '<div class="muted">Loading…</div>', '<p class="muted">' + esc(course().name) + ' sentences from Tatoeba' + (updatedAt() ? ' · batch of ' + updatedAt() : '') + '. Tap a card to reveal, 🐢 for slow audio.</p>');
       case 'wiki': return shell(title, '<div class="muted">Fetching an article…</div>', '<p class="muted">Live from ' + esc(course().id) + '.wikipedia.org — a fresh random article every tap.</p>');
-      case 'lookup': return shell(title, '<form class="xp-search" id="lk-form"><input id="lk-q" placeholder="Type an English word, e.g. river" autocomplete="off"><button class="btn sm">Search</button></form><div id="lk-out" class="muted" style="margin-top:12px">Results come live from Tatoeba and Wiktionary.</div>');
+      case 'lookup': return shell(title, '<form class="xp-search" id="lk-form"><input id="lk-q" placeholder="Type an English word, e.g. river" autocomplete="off"><button class="btn sm">Search</button></form><div id="lk-out" class="muted" style="margin-top:12px">Results come from your course, the Tatoeba sentence bank and live Wiktionary.</div>');
       case 'sounds': return shell(title, '<div id="sg"></div>', '<p class="muted">Every letter of ' + esc(course().name) + '. Tap to hear. Try the mystery round when ready.</p>');
       case 'mastery': return shell(title, masteryHtml());
       default: return shell(title, '<div id="game"></div>');
@@ -161,16 +142,7 @@
       });
     }
     list = shuffle(bundled(course().id).slice());
-    /* Top up with a live search of a random word you know, when the relay is reachable. */
-    var seed = shuffle(words())[0];
     draw();
-    if (seed && /^[a-z ]{3,}$/i.test(seed.en)) {
-      tatoebaSearch(course().id, seed.en).then(function (more) {
-        var have = {}; list.forEach(function (x) { have[x.id] = 1; });
-        var add = more.filter(function (x) { return !have[x.id]; });
-        if (add.length) { list = add.concat(list); page = 0; draw(); }
-      }).catch(function () {});
-    }
   }
 
   /* ------------------------------------------------------------- Wiki */
@@ -199,21 +171,30 @@
   /* ----------------------------------------------------------- Lookup */
   function lookup() {
     var form = $('#lk-form'), out = $('#lk-out');
+    function find(id, q) {
+      q = q.toLowerCase();
+      return bundled(id).filter(function (x) { return (x.en + ' ' + (x.w || '') + ' ' + x.t + ' ' + (x.hi || '')).toLowerCase().indexOf(q) > -1; });
+    }
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var q = $('#lk-q').value.trim(); if (!q) return;
       out.innerHTML = '<div class="xp-skel"></div>';
       var id = course().id;
-      Promise.all([tatoebaSearch(id, q).catch(function () { return null; }), wiktionary(id, q).catch(function () { return []; })]).then(function (r) {
-        var s = r[0], d = r[1], html = '';
-        if (s === null) html += '<div class="card">Live sentence search is offline right now (the free relay is busy). Showing matching cached sentences instead.</div>';
-        var rows = s || bundled(id).filter(function (x) { return x.en.toLowerCase().indexOf(q.toLowerCase()) > -1; });
-        html += rows.length ? rows.slice(0, 8).map(sentenceCard).join('') : '<div class="card">No sentences found for “' + esc(q) + '”.</div>';
+      var mine = words().filter(function (w) { return (w.en + ' ' + w.hi + ' ' + w.roman + ' ' + w.script).toLowerCase().indexOf(q.toLowerCase()) > -1; }).slice(0, 4);
+      wiktionary(id, q).catch(function () { return []; }).then(function (d) {
+        var rows = find(id, q), html = '';
+        if (mine.length) html += '<h3 style="margin:4px 0 6px">From your course</h3>' + mine.map(function (w) {
+          return '<div class="xp-sent open"><div class="xs-top"><div class="xs-t">' + esc(w.script) + ' <small style="font-size:14px;color:var(--wolf)">' + esc(w.roman) + '</small></div><div class="xs-btns"><button data-sw="' + esc(w.script) + '">\ud83d\udd0a</button></div></div><div class="xs-tr">' + esc(gloss(w)) + '</div></div>';
+        }).join('');
+        if (rows.length) html += '<h3 style="margin:16px 0 6px">Real sentences</h3>' + rows.slice(0, 8).map(sentenceCard).join('');
         if (d.length) html += '<h3 style="margin:16px 0 6px">Wiktionary</h3>' + d.map(function (x) {
           return '<a class="xp-wk" target="_blank" rel="noopener" href="https://en.wiktionary.org/wiki/' + encodeURIComponent(x.title) + '"><b>' + esc(x.title) + '</b><span>' + x.snippet.replace(/<[^>]+>/g, '') + '</span></a>';
         }).join('');
+        if (!html) html = '<div class="card">Nothing found for \u201c' + esc(q) + '\u201d. Try a simpler English word like <b>water</b>, <b>home</b> or <b>eat</b>.</div>';
         out.innerHTML = html;
-        $$('.xp-sent', out).forEach(function (el, i) {
+        $$('[data-sw]', out).forEach(function (b) { b.addEventListener('click', function () { say(b.dataset.sw); }); });
+        var cards = $$('.xp-sent[data-i]', out);
+        cards.forEach(function (el, i) {
           el.addEventListener('click', function (e) { if (e.target.closest('button')) return; el.classList.toggle('open'); say(rows[i].t); });
           $$('[data-say]', el).forEach(function (b) { b.addEventListener('click', function () { say(rows[i].t); }); });
           $$('[data-slow]', el).forEach(function (b) { b.addEventListener('click', function () { say(rows[i].t, true); }); });

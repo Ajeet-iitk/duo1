@@ -208,7 +208,7 @@ body { line-height: 1.45; text-rendering: optimizeLegibility; }
 .right-rail .card:hover { transform: translateY(-2px); box-shadow: 0 2px 0 rgba(0,0,0,.04), 0 16px 30px -16px rgba(0,0,0,.3); }
 
 /* page transition */
-.center-col { animation: pageIn .35s cubic-bezier(.2,.8,.2,1) both; }
+.enter .center-col { animation: pageIn .35s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } }
 
 /* learning path: friendlier nodes */

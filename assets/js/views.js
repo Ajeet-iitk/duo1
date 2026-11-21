@@ -1150,7 +1150,9 @@
     window.addEventListener('hashchange', function () {
       TLSfx.play('whoosh');
       closeExplain();
+      var w = $('#wrap'); w.classList.add('enter');
       renderRoute();
+      setTimeout(function () { w.classList.remove('enter'); }, 450);
     });
 
     document.addEventListener('keydown', function (e) {

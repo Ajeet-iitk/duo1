@@ -30,6 +30,7 @@
   function normalize(code) { return String(code || '').replace('_', '-').toLowerCase(); }
 
   var chosen = {};      /* user-picked voice name per base lang */
+  var cloudBad = false, warned = false;
   var cloudOn = true;   /* free Google Translate TTS fallback when no native voice */
   var audioEl = null;
 
@@ -109,10 +110,14 @@
     var isIndic = base === 'ta' || base === 'te' || base === 'gu';
     var nativeOk = v && normalize(v.lang).split('-')[0] === base;
     if (nativeOk) return nativeSpeak(text, opts, v);
-    if (isIndic && cloudOn) {
+    if (isIndic && cloudOn && !cloudBad) {
       var ok = cloudSpeak(text, lang, {
         rate: opts.rate, onend: opts.onend,
-        onfail: function () { if (root.speechSynthesis) nativeSpeak(text, opts, v); else if (opts.onend) opts.onend(); }
+        onfail: function () {
+          cloudBad = true;
+          if (!warned && root.TLUI) { warned = true; root.TLUI.toast('No ' + (LANG_NAMES[base] || '') + ' voice on this device and the online voice is unreachable \u2014 audio is off for it.'); }
+          if (root.speechSynthesis && v) nativeSpeak(text, opts, v); else if (opts.onend) opts.onend();
+        }
       });
       if (ok) return true;
     }
