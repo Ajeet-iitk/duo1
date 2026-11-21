@@ -520,9 +520,9 @@
       '<input type="range" min="50" max="120" value="' + Math.round(s.settings.speechRate * 100) + '" id="set-rate" style="width:140px"></div>' +
       '<div class="switch"><div><div class="r-title">Voice</div><div class="r-sub">Pick the best one on your device</div></div>' +
       '<select id="set-voice" style="max-width:190px">' + voiceOptions() + '</select></div>' +
-      '<div class="switch"><div><div class="r-title">Online voice fallback</div><div class="r-sub">Free Google voice when your device has none for ' + esc(course().name) + '</div></div>' +
+      '<div class="switch"><div><div class="r-title">Recorded voice clips</div><div class="r-sub">Works offline, even if your device has no ' + esc(course().name) + ' voice</div></div>' +
       '<div class="toggle' + (TLSpeech.cloud ? ' on' : '') + '" data-toggle="cloudVoice"></div></div>' +
-      '<div class="switch"><div><div class="r-title">Test audio</div><div class="r-sub">' + esc(TLSpeech.voiceName(course().speech).replace(/^none$/, 'Online voice (cloud)')) + '</div></div>' +
+      '<div class="switch"><div><div class="r-title">Test audio</div><div class="r-sub">' + esc(TLSpeech.voiceName(course().speech).replace(/^none$/, 'Recorded clips')) + '</div></div>' +
       '<button class="btn sm" id="set-testspeak">Play sample</button></div>' +
       '</div>' +
 
@@ -580,7 +580,7 @@
 
   function voiceOptions() {
     var list = TLSpeech.voicesFor(course().speech);
-    if (!list.length) return '<option>Online voice (cloud)</option>';
+    if (!list.length) return '<option>Recorded clips (no system voice)</option>';
     return list.map(function (v) { return '<option value="' + esc(v.name) + '">' + esc(v.name) + '</option>'; }).join('');
   }
 

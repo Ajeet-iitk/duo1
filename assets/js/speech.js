@@ -30,7 +30,7 @@
   function normalize(code) { return String(code || '').replace('_', '-').toLowerCase(); }
 
   var chosen = {};      /* user-picked voice name per base lang */
-  var cloudBad = false, warned = false;
+  var warned = false;
   var cloudOn = true;   /* free Google Translate TTS fallback when no native voice */
   var audioEl = null;
 
@@ -61,26 +61,41 @@
 
   function hasVoice(lang) { return voicesFor(lang).length > 0; }
 
-  /* Free cloud voice (Google Translate TTS) — used when the device has no
-     voice for the language, which is common for Tamil/Telugu/Gujarati. */
-  function cloudSpeak(text, lang, opts) {
+  /* Pre-recorded clips (assets/audio, built by tools/build-audio.mjs). These work offline
+     and on devices that have no native Tamil/Telugu/Gujarati voice. */
+  function clipFor(text, lang, slow) {
+    var idx = root.TLAudioIndex;
+    if (!idx) return null;
+    var base = normalize(lang).split('-')[0];
+    var e = idx[base] && idx[base][String(text).trim()];
+    if (!e) return null;
+    var parts = e.split(',');
+    var useSlow = slow && parts[1] === 's';
+    return { src: 'assets/audio/' + base + '/' + parts[0] + (useSlow ? '_s' : '') + '.mp3', rate: slow && !useSlow ? 0.75 : 1 };
+  }
+
+  function playClip(clip, opts, onfail) {
     try {
       if (audioEl) { audioEl.pause(); audioEl = null; }
-      var base = normalize(lang).split('-')[0];
-      var a = new Audio();
-      a.referrerPolicy = 'no-referrer';
-      a.src = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=' + base + '&q=' + encodeURIComponent(String(text).slice(0, 190));
-      a.playbackRate = Math.min(1.2, Math.max(0.6, (opts.rate == null ? rate : opts.rate) + 0.1));
+      var a = new Audio(clip.src);
+      a.playbackRate = clip.rate;
       var done = false;
-      function fin(ok) { if (done) return; done = true; if (!ok && opts.onfail) opts.onfail(); else if (opts.onend) opts.onend(); }
+      function fin(ok) { if (done) return; done = true; if (!ok) onfail && onfail(); else if (opts.onend) opts.onend(); }
       a.onended = function () { fin(true); };
       a.onerror = function () { fin(false); };
       audioEl = a;
       var p = a.play();
-      if (p && p.catch) p.catch(function () { fin(false); });
+      if (p && p.catch) p.catch(function (err) {
+        if (err && err.name === 'NotAllowedError') {
+          /* Browser blocks sound until the first tap — not a real failure. */
+          done = true; if (opts.onend) opts.onend();
+          if (root.TLUI && !blockedWarned) { blockedWarned = true; root.TLUI.toast('Tap anywhere on the page once to allow sound, then press \ud83d\udd0a again.'); }
+        } else fin(false);
+      });
       return true;
     } catch (e) { return false; }
   }
+  var blockedWarned = false;
 
   function nativeSpeak(text, opts, v) {
     var u = new root.SpeechSynthesisUtterance(String(text));
@@ -93,36 +108,35 @@
     function fin() { if (!done) { done = true; if (opts.onend) opts.onend(); } }
     u.onend = fin; u.onerror = fin;
     setTimeout(fin, 2500 + String(text).length * 180 / (u.rate || 1));
-    try { root.speechSynthesis.speak(u); } catch (e) { return false; }
-    /* Chrome bug: long utterances pause after ~15s; nudge it along. */
+    /* Chrome drops an utterance queued in the same tick as cancel(): wait a beat. */
+    setTimeout(function () { try { root.speechSynthesis.speak(u); } catch (e) { fin(); } }, 60);
     return true;
   }
 
-  /* Speak text. opts: {lang, rate, slow, onend} */
+  function warnNoVoice(base) {
+    if (warned || !root.TLUI) return;
+    warned = true;
+    root.TLUI.toast('No ' + (LANG_NAMES[base] || '') + ' audio for this text on this device. Install a ' + (LANG_NAMES[base] || '') + ' voice in your system speech settings.');
+  }
+
+  /* Speak text. opts: {lang, rate, slow, onend}
+     order: recorded clip -> native voice -> friendly message. */
   function speak(text, opts) {
     opts = opts || {};
     if (opts.slow) opts.rate = Math.min(rate, 0.55);
     if (!enabled || !text) { if (opts.onend) setTimeout(opts.onend, 60); return false; }
     stop();
     var lang = opts.lang || 'en';
-    var v = root.speechSynthesis ? pickVoice(lang) : null;
     var base = normalize(lang).split('-')[0];
-    var isIndic = base === 'ta' || base === 'te' || base === 'gu';
+    var v = root.speechSynthesis ? pickVoice(lang) : null;
     var nativeOk = v && normalize(v.lang).split('-')[0] === base;
-    if (nativeOk) return nativeSpeak(text, opts, v);
-    if (isIndic && cloudOn && !cloudBad) {
-      var ok = cloudSpeak(text, lang, {
-        rate: opts.rate, onend: opts.onend,
-        onfail: function () {
-          cloudBad = true;
-          if (!warned && root.TLUI) { warned = true; root.TLUI.toast('No ' + (LANG_NAMES[base] || '') + ' voice on this device and the online voice is unreachable \u2014 audio is off for it.'); }
-          if (root.speechSynthesis && v) nativeSpeak(text, opts, v); else if (opts.onend) opts.onend();
-        }
-      });
-      if (ok) return true;
+    function viaNative() {
+      if (nativeOk || (v && !(base === 'ta' || base === 'te' || base === 'gu'))) return nativeSpeak(text, opts, v);
+      warnNoVoice(base); if (opts.onend) setTimeout(opts.onend, 60); return false;
     }
-    if (!root.speechSynthesis) { if (opts.onend) setTimeout(opts.onend, 60); return false; }
-    return nativeSpeak(text, opts, v);
+    var clip = cloudOn ? clipFor(text, lang, opts.slow) : null;
+    if (clip && playClip(clip, opts, viaNative)) return true;
+    return viaNative();
   }
 
   /* Speak the same text twice: normal, then slow. */

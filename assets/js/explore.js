@@ -153,6 +153,7 @@
     function load() {
       stage.innerHTML = '<div class="xp-skel"></div>';
       wikiRandom(course().id).then(function (a) {
+        if (!document.body.contains(stage)) return;   /* user already left this page */
         stage.innerHTML = '<div class="card xp-wiki">' + (a.thumb ? '<img src="' + esc(a.thumb) + '" alt="" loading="lazy">' : '') +
           '<h2 class="xw-t">' + esc(a.title) + ' <button class="iconbtn" id="xw-say" title="Listen">🔊</button></h2>' +
           '<p class="xw-x">' + esc(a.extract) + '</p>' +
@@ -163,6 +164,7 @@
         $('#xw-read').addEventListener('click', function () { say(a.extract.split(/[.।]/)[0]); });
         $('#xw-next').addEventListener('click', function () { sfx('whoosh'); load(); });
       }).catch(function () {
+        if (!document.body.contains(stage)) return;
         stage.innerHTML = '<div class="card">Couldn’t reach Wikipedia. Check your connection. <button class="btn sm" id="xw-retry">Retry</button></div>';
         $('#xw-retry').addEventListener('click', load);
       });

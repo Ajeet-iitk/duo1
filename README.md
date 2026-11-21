@@ -55,6 +55,7 @@ bhasha/
 - **Creative navbar** — a glowing pill that slides between tabs (each tab has its own colour), a live mastery-level chip under the logo, a daily-goal ring around Progress, a compass that wiggles on Explore, and a floating glass dock on phones.
 - **Cinematic day/night** — switching themes takes ~2.4 s: the new theme is revealed through a circle expanding from the toggle while a sun or moon crosses the sky with a dusk/dawn wash and twinkling stars.
 - **Film Dialogues** — famous Tamil, Telugu and Gujarati film lines (Baasha, Nayakan, Pushpa, Pokiri, RRR, Hellaro, Last Film Show and more) on CSS-drawn posters. Hear each line, slow it down, tap words for meanings, shadow it with the mic, or take the cinema quiz.
+- **Audio that always works** — 955 pre-recorded clips (every word, phrase, letter, film line and bundled sentence, normal + slow) ship with the app, so sound works offline and on devices with no Tamil/Telugu/Gujarati voice. Rebuild or extend with `node tools/build-audio.mjs`.
 - **Fixed:** progress was wiped on every page reload once you had earned XP (a state-loading crash); scrolling; night mode on lessons, popups and settings.
 
 ![Film Dialogues — Telugu](docs/screenshots/film-telugu.png)
