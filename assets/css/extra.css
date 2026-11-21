@@ -239,7 +239,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--blue) !important
 :root[data-theme="dark"] .muted { color: var(--wolf); }
 
 /* mobile: roomier bottom bar, safe areas, no sideways scroll */
-html, body { max-width: 100%; overflow-x: hidden; }
+html, body { max-width: 100%; }
+body { overflow-x: clip; }
 @media (max-width: 900px) {
   .mobile-nav { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 -6px 20px -10px rgba(0,0,0,.25); padding-bottom: env(safe-area-inset-bottom); }
   .mobile-nav .nav-item.active { transform: translateY(-3px); }
@@ -278,3 +279,71 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .blueprint .btn.disabled { background: var(--swan); color: var(--hare); }
 :root[data-theme="dark"] .blueprint .btn.ghost { background: var(--polar); }
 @media (max-width: 640px) { .blueprint { padding: 16px; align-items: flex-start; } }
+
+/* ==========================================================================
+   Night mode for lesson player, drawers, modals and tinted components
+   ========================================================================== */
+:root[data-theme="dark"] {
+  --tint-blue: #12354f; --tint-blue-b: #1f6f9c; --tint-purple: #2a2147; --tint-purple-b: #4b3a80;
+  --tint-green: #17381a; --tint-yellow: #3a3115;
+}
+:root[data-theme="dark"] .nav-item.active, :root[data-theme="dark"] .nav-item.active:hover { background: var(--tint-blue); border-color: var(--tint-blue-b); color: #6ccbff; }
+:root[data-theme="dark"] .pick.sel, :root[data-theme="dark"] .choice.sel, :root[data-theme="dark"] .pick.sel:hover, :root[data-theme="dark"] .choice.sel:hover { background: var(--tint-blue); box-shadow: 0 3px 0 var(--tint-blue-b); }
+:root[data-theme="dark"] .choice.bad { box-shadow: 0 3px 0 #7a2a30; color: #ff8a8a; }
+:root[data-theme="dark"] .choice.ok { color: #9be15d; }
+:root[data-theme="dark"] .chip.green { background: var(--tint-green); border-color: #2f6b2a; color: #8fe05a; }
+:root[data-theme="dark"] .chip.blue { background: var(--tint-blue); border-color: var(--tint-blue-b); color: #6ccbff; }
+:root[data-theme="dark"] .chip.yellow { background: var(--tint-yellow); border-color: #7a6320; color: #ffd75a; }
+:root[data-theme="dark"] .explain-btn, :root[data-theme="dark"] .btn.explain, :root[data-theme="dark"] .ai-asked { background: var(--tint-purple); border-color: var(--tint-purple-b); color: #d2b0ff; box-shadow: none; }
+:root[data-theme="dark"] .btn.explain { box-shadow: 0 4px 0 var(--tint-purple-b); }
+:root[data-theme="dark"] .explain-btn:hover { background: #352a5c; }
+:root[data-theme="dark"] .msg.me { background: var(--tint-blue); color: #bfe9ff; border-color: var(--tint-blue-b); }
+:root[data-theme="dark"] .typebox:focus, :root[data-theme="dark"] .field input:focus, :root[data-theme="dark"] .field select:focus { background: var(--tint-blue); }
+:root[data-theme="dark"] .unit-band .ub-guide:hover { background: #e8eef5; }
+:root[data-theme="dark"] .lesson-foot.ok .fb-title, :root[data-theme="dark"] .lesson-foot.ok .fb-body { color: #9be15d; }
+:root[data-theme="dark"] .lesson-foot.no .fb-title, :root[data-theme="dark"] .lesson-foot.no .fb-body { color: #ff9a9a; }
+:root[data-theme="dark"] .lesson-shell, :root[data-theme="dark"] .blueprint { color: var(--eel); }
+:root[data-theme="dark"] .lesson-shell { background: #0f1a28; }
+:root[data-theme="dark"] .modal, :root[data-theme="dark"] .ai-drawer { background: #16273a; color: var(--eel); border: 2px solid var(--swan); }
+:root[data-theme="dark"] .toast { background: #e8eef5; color: #1b2a3a; }
+:root[data-theme="dark"] .btn.disabled, :root[data-theme="dark"] .btn[disabled] { background: #24364b; color: #6f8399; }
+:root[data-theme="dark"] .stat.heart { color: #ff6b6b; }
+:root[data-theme="dark"] .node.done { filter: saturate(1.1); }
+:root[data-theme="dark"] .super-card .btn-white { color: #1899d6; }
+:root[data-theme="dark"] code, :root[data-theme="dark"] .k { background: var(--polar); color: var(--eel); }
+:root[data-theme="dark"] .start-bubble { background: #e8eef5; color: #46a302; }
+:root[data-theme="dark"] .tile, :root[data-theme="dark"] .tile-src, :root[data-theme="dark"] .typebox { background: var(--polar); color: var(--eel); border-color: var(--swan); }
+:root[data-theme="dark"] img, :root[data-theme="dark"] .xp-wiki img { filter: brightness(.9); }
+
+/* ==========================================================================
+   Spacing & rhythm pass
+   ========================================================================== */
+.main { padding-bottom: 130px; }
+.center-col > h1.q-title, .center-col > .q-title { margin: 6px 0 18px; }
+.card { padding: 18px 20px; }
+.card h3 { margin-bottom: 12px; }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 14px 0; border-top: 1px solid var(--swan); }
+.card h3 + .switch, .card h3 + .wrapflex { border-top: 0; padding-top: 4px; }
+.switch .r-title { font-weight: 900; font-size: 15px; color: var(--eel); }
+.switch .r-sub { margin-top: 2px; font-size: 13px; font-weight: 700; color: var(--wolf); line-height: 1.35; }
+.switch select, .switch input[type=range] { flex: none; }
+.wrapflex { display: flex; flex-wrap: wrap; gap: 10px; }
+.field { display: block; margin-bottom: 14px; } .field > span { display: block; margin-bottom: 6px; font-weight: 800; font-size: 13px; color: var(--wolf); }
+.msg { max-width: 100%; } .ai-drawer .ai-body { padding: 18px; gap: 14px; }
+.unit-band { padding: 20px 22px; margin-bottom: 8px; } .path { padding: 14px 0 26px; }
+.mascot-row { margin: 18px 0 8px; }
+.xp-tile { padding: 18px; } .xp-grid { gap: 14px; margin-bottom: 20px; }
+.right-rail .card { padding: 18px; }
+#xp-stage { margin-top: 14px; }
+
+/* music player never covers content or the phone tab bar */
+.mp-main { width: 46px; height: 46px; font-size: 20px; opacity: .92; }
+@media (max-width: 900px) {
+  .main { padding-bottom: 150px; }
+  .mp { bottom: calc(84px + env(safe-area-inset-bottom)); right: 10px; }
+  .card { padding: 16px; }
+  .switch { gap: 12px; }
+  .switch select { max-width: 150px !important; }
+  .switch input[type=range] { width: 110px !important; }
+}
+@media (max-width: 900px) { .mp-main { width: 40px; height: 40px; font-size: 17px; opacity: .85; } .mp.open .mp-main, .mp.playing .mp-main { opacity: 1; } }

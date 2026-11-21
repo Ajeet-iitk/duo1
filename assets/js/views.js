@@ -489,7 +489,7 @@
       '<select id="set-voice" style="max-width:190px">' + voiceOptions() + '</select></div>' +
       '<div class="switch"><div><div class="r-title">Online voice fallback</div><div class="r-sub">Free Google voice when your device has none for ' + esc(course().name) + '</div></div>' +
       '<div class="toggle' + (TLSpeech.cloud ? ' on' : '') + '" data-toggle="cloudVoice"></div></div>' +
-      '<div class="switch"><div><div class="r-title">Test audio</div><div class="r-sub">' + esc(TLSpeech.voiceName(course().speech)) + '</div></div>' +
+      '<div class="switch"><div><div class="r-title">Test audio</div><div class="r-sub">' + esc(TLSpeech.voiceName(course().speech).replace(/^none$/, 'Online voice (cloud)')) + '</div></div>' +
       '<button class="btn sm" id="set-testspeak">Play sample</button></div>' +
       '</div>' +
 
